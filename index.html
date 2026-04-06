@@ -1,10 +1,516 @@
-# リポジトリのフォルダに移動
-cd your-repo-folder
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>仕事メモ</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap');
+  :root {
+    --bg:#ffffff;--bg2:#f5f5f4;--bg3:#eeece8;
+    --text:#1a1a1a;--text2:#6b6b6b;--text3:#a0a0a0;
+    --border:rgba(0,0,0,0.12);--border2:rgba(0,0,0,0.22);
+    --info-bg:#e6f1fb;--info-text:#185fa5;--info-border:#85b7eb;
+    --success-bg:#eaf3de;--success-text:#3b6d11;--success-border:#97c459;
+    --danger-bg:#fcebeb;--danger-text:#a32d2d;--danger-border:#f09595;
+    --warning-bg:#faeeda;--warning-text:#854f0b;--warning-border:#ef9f27;
+    --radius:12px;--radius-sm:8px;
+  }
+  @media(prefers-color-scheme:dark){
+    :root{
+      --bg:#1e1e1d;--bg2:#2a2a28;--bg3:#333330;
+      --text:#f0ede8;--text2:#a8a49e;--text3:#6b6760;
+      --border:rgba(255,255,255,0.12);--border2:rgba(255,255,255,0.22);
+      --info-bg:#0c447c;--info-text:#b5d4f4;--info-border:#378add;
+      --success-bg:#27500a;--success-text:#c0dd97;--success-border:#639922;
+      --danger-bg:#791f1f;--danger-text:#f7c1c1;--danger-border:#e24b4a;
+      --warning-bg:#633806;--warning-text:#fac775;--warning-border:#ba7517;
+    }
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Noto Sans JP',sans-serif;background:var(--bg3);color:var(--text);min-height:100vh;padding-bottom:80px;}
+  .app{max-width:480px;margin:0 auto;background:var(--bg3);min-height:100vh;}
+  .app-header{background:var(--bg);border-bottom:0.5px solid var(--border);padding:1rem 1.25rem 0.75rem;position:sticky;top:0;z-index:10;}
+  .app-title{font-size:20px;font-weight:700;}
+  .header-sub{font-size:12px;color:var(--text3);margin-top:2px;}
+  .tab-bar{display:flex;background:var(--bg);border-bottom:0.5px solid var(--border);position:sticky;top:64px;z-index:9;}
+  .tab{flex:1;text-align:center;padding:10px 2px;font-size:12px;font-weight:500;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;transition:all 0.15s;font-family:'Noto Sans JP',sans-serif;}
+  .tab.active{color:var(--info-text);border-bottom-color:var(--info-text);}
+  .section{padding:1rem;}
+  .section-hidden{display:none;}
+  .card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);padding:1rem 1.25rem;margin-bottom:12px;}
+  .section-label{font-size:11px;font-weight:500;color:var(--text3);letter-spacing:0.05em;margin-bottom:8px;}
+  .cat-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;}
+  .cat-chip{font-size:13px;padding:5px 12px;border-radius:20px;border:0.5px solid var(--border2);background:var(--bg2);color:var(--text2);cursor:pointer;transition:all 0.12s;font-family:'Noto Sans JP',sans-serif;}
+  .cat-chip.sel{border-color:var(--info-border);background:var(--info-bg);color:var(--info-text);font-weight:500;}
+  .voice-mode-row{display:flex;gap:6px;margin-bottom:12px;}
+  .vmode-btn{flex:1;font-size:12px;padding:7px 8px;border-radius:var(--radius-sm);border:0.5px solid var(--border2);background:var(--bg2);color:var(--text2);cursor:pointer;font-family:'Noto Sans JP',sans-serif;transition:all 0.12s;text-align:center;line-height:1.4;}
+  .vmode-btn.active{border-color:var(--info-border);background:var(--info-bg);color:var(--info-text);font-weight:500;}
+  .mic-area{display:flex;align-items:center;gap:1rem;}
+  .mic-btn{width:72px;height:72px;border-radius:50%;border:0.5px solid var(--border2);background:var(--bg2);font-size:30px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s;flex-shrink:0;user-select:none;-webkit-user-select:none;}
+  .mic-btn.listening{background:var(--danger-bg);border-color:var(--danger-border);animation:pulse 1s infinite;}
+  @keyframes pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.07);}}
+  .voice-status{font-size:14px;color:var(--text2);line-height:1.5;margin-bottom:4px;}
+  .voice-status.active{color:var(--danger-text);font-weight:500;}
+  .voice-hint{font-size:12px;color:var(--text3);}
+  .divider{display:flex;align-items:center;gap:8px;margin:12px 0;}
+  .divider-line{flex:1;height:0.5px;background:var(--border);}
+  .divider-text{font-size:11px;color:var(--text3);}
+  .memo-input{width:100%;border:0.5px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;font-size:15px;font-family:'Noto Sans JP',sans-serif;color:var(--text);background:var(--bg2);resize:none;min-height:80px;outline:none;transition:border-color 0.15s;line-height:1.6;}
+  .memo-input:focus{border-color:var(--info-border);}
+  .memo-input::placeholder{color:var(--text3);}
+  .alarm-toggle-row{display:flex;align-items:center;justify-content:space-between;margin:12px 0 8px;}
+  .alarm-toggle-label{font-size:14px;font-weight:500;}
+  .toggle-sw{width:44px;height:24px;border-radius:12px;background:var(--bg3);border:0.5px solid var(--border2);cursor:pointer;position:relative;transition:background 0.2s;flex-shrink:0;}
+  .toggle-sw.on{background:var(--info-text);border-color:var(--info-text);}
+  .toggle-sw::after{content:'';position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform 0.2s;}
+  .toggle-sw.on::after{transform:translateX(20px);}
+  .alarm-fields{display:none;}
+  .alarm-fields.visible{display:block;}
+  .alarm-row{display:flex;gap:8px;align-items:center;margin-bottom:8px;}
+  .alarm-label{font-size:13px;color:var(--text2);min-width:40px;}
+  .alarm-input{flex:1;border:0.5px solid var(--border);border-radius:var(--radius-sm);padding:7px 10px;font-size:14px;font-family:'Noto Sans JP',sans-serif;color:var(--text);background:var(--bg2);outline:none;}
+  .alarm-input:focus{border-color:var(--info-border);}
+  .notif-hint{font-size:12px;color:var(--info-text);background:var(--info-bg);border:0.5px solid var(--info-border);border-radius:var(--radius-sm);padding:8px 10px;margin-top:8px;line-height:1.6;}
+  .notif-hint.warn{color:var(--warning-text);background:var(--warning-bg);border-color:var(--warning-border);}
+  .add-btn{width:100%;margin-top:10px;padding:12px;font-size:16px;font-weight:500;font-family:'Noto Sans JP',sans-serif;border:none;border-radius:var(--radius-sm);background:var(--info-text);color:#fff;cursor:pointer;}
+  .add-btn:active{opacity:0.8;}
+  .add-btn:disabled{opacity:0.5;cursor:not-allowed;}
+  .filter-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;}
+  .filter-chip{font-size:12px;padding:5px 12px;border-radius:20px;border:0.5px solid var(--border);background:var(--bg2);color:var(--text2);cursor:pointer;font-family:'Noto Sans JP',sans-serif;}
+  .filter-chip.active{border-color:var(--border2);background:var(--bg);color:var(--text);font-weight:500;}
+  .memo-item{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);padding:0.875rem 1rem;margin-bottom:8px;}
+  .memo-item.done{opacity:0.45;}
+  .memo-item.overdue{border-color:var(--danger-border);border-width:1.5px;}
+  .memo-meta{display:flex;align-items:center;gap:6px;margin-bottom:6px;flex-wrap:wrap;}
+  .memo-cat-badge{font-size:11px;padding:2px 8px;border-radius:4px;font-weight:500;}
+  .tag{font-size:10px;padding:2px 6px;border-radius:4px;border:0.5px solid;}
+  .tag-voice{background:var(--bg2);color:var(--text3);border-color:var(--border);}
+  .tag-alarm{background:var(--warning-bg);color:var(--warning-text);border-color:var(--warning-border);}
+  .tag-overdue{background:var(--danger-bg);color:var(--danger-text);border-color:var(--danger-border);}
+  .memo-time{font-size:11px;color:var(--text3);margin-left:auto;}
+  .memo-text{font-size:15px;line-height:1.65;}
+  .memo-item.done .memo-text{text-decoration:line-through;color:var(--text3);}
+  .memo-alarm-time{font-size:12px;color:var(--warning-text);margin-top:5px;}
+  .memo-actions{display:flex;gap:8px;margin-top:10px;padding-top:10px;border-top:0.5px solid var(--border);flex-wrap:wrap;}
+  .action-btn{font-size:13px;padding:5px 12px;border-radius:var(--radius-sm);border:0.5px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;font-family:'Noto Sans JP',sans-serif;}
+  .check-btn{border-color:var(--success-border);color:var(--success-text);}
+  .del-btn{border-color:var(--danger-border);color:var(--danger-text);margin-left:auto;}
+  .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
+  .stat-card{background:var(--bg);border-radius:var(--radius-sm);padding:0.875rem 1rem;border:0.5px solid var(--border);}
+  .stat-label{font-size:11px;color:var(--text3);margin-bottom:4px;}
+  .stat-val{font-size:24px;font-weight:500;}
+  .stat-sub{font-size:11px;color:var(--text2);margin-top:2px;}
+  .empty-msg{text-align:center;padding:3rem 1rem;color:var(--text3);font-size:14px;line-height:2;}
+  .alarm-overlay{display:none;position:fixed;inset:0;z-index:100;background:rgba(0,0,0,0.55);align-items:center;justify-content:center;}
+  .alarm-overlay.show{display:flex;}
+  .alarm-popup{background:var(--bg);border-radius:var(--radius);padding:1.5rem;max-width:320px;width:90%;text-align:center;}
+  .alarm-icon{font-size:44px;margin-bottom:12px;display:block;animation:ring 0.4s infinite alternate;}
+  @keyframes ring{from{transform:rotate(-12deg);}to{transform:rotate(12deg);}}
+  .alarm-popup-title{font-size:18px;font-weight:700;margin-bottom:8px;}
+  .alarm-popup-body{font-size:14px;color:var(--text2);line-height:1.6;margin-bottom:16px;}
+  .alarm-ok-btn{width:100%;padding:12px;font-size:15px;font-weight:500;font-family:'Noto Sans JP',sans-serif;border:none;border-radius:var(--radius-sm);background:var(--info-text);color:#fff;cursor:pointer;}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--text);color:var(--bg);font-size:13px;padding:8px 20px;border-radius:20px;opacity:0;transition:all 0.25s;pointer-events:none;white-space:nowrap;z-index:200;font-family:'Noto Sans JP',sans-serif;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  .notif-allow-btn{width:100%;margin-top:8px;padding:9px;font-size:13px;font-weight:500;font-family:'Noto Sans JP',sans-serif;border:0.5px solid var(--info-border);border-radius:var(--radius-sm);background:var(--info-bg);color:var(--info-text);cursor:pointer;}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="app-header">
+    <div class="app-title">仕事メモ 🗒️</div>
+    <div class="header-sub" id="headerSub">読み込み中...</div>
+  </div>
+  <div class="tab-bar">
+    <div class="tab active" onclick="switchTab('add')">＋ メモする</div>
+    <div class="tab" onclick="switchTab('list')">📋 チェック</div>
+    <div class="tab" onclick="switchTab('alarm')">⏰ アラーム</div>
+    <div class="tab" onclick="switchTab('stats')">📊 まとめ</div>
+  </div>
+  <div class="section" id="sec-add">
+    <div class="card">
+      <div class="section-label">カテゴリ</div>
+      <div class="cat-row" id="catChips"></div>
+      <div class="section-label">音声入力</div>
+      <div class="voice-mode-row">
+        <div class="vmode-btn active" id="vmode-hold" onclick="setVoiceMode('hold')">🎙 押している間だけ</div>
+        <div class="vmode-btn" id="vmode-toggle" onclick="setVoiceMode('toggle')">🔴 押してON/OFFモード</div>
+      </div>
+      <div class="mic-area" id="voiceSection">
+        <button class="mic-btn" id="micBtn"
+          onmousedown="onMicDown(event)" onmouseup="onMicUp(event)"
+          ontouchstart="onMicDown(event)" ontouchend="onMicUp(event)">🎙</button>
+        <div>
+          <div class="voice-status" id="voiceStatus">マイクボタンで話してメモできます</div>
+          <div class="voice-hint" id="voiceHint">押している間だけ録音するモードです</div>
+        </div>
+      </div>
+      <div class="divider"><div class="divider-line"></div><div class="divider-text">または文字で入力</div><div class="divider-line"></div></div>
+      <textarea class="memo-input" id="memoInput" placeholder="ここに文字を入力することもできます..." rows="3"></textarea>
+      <div class="alarm-toggle-row">
+        <span class="alarm-toggle-label">⏰ アラームをセット</span>
+        <div class="toggle-sw" id="alarmToggle" onclick="toggleAlarmField()"></div>
+      </div>
+      <div class="alarm-fields" id="alarmFields">
+        <div class="alarm-row">
+          <span class="alarm-label">日時</span>
+          <input type="datetime-local" class="alarm-input" id="alarmDatetime">
+        </div>
+        <div class="notif-hint" id="notifHint">🔔 通知を許可するとアラーム時刻にお知らせします</div>
+        <button class="notif-allow-btn" id="notifAllowBtn" onclick="requestNotifPermission()" style="display:none;">通知を許可する</button>
+      </div>
+      <button class="add-btn" id="addBtn" onclick="addMemo()">メモを追加</button>
+    </div>
+  </div>
+  <div class="section section-hidden" id="sec-list">
+    <div class="filter-row" id="filterChips"></div>
+    <div id="memoList"></div>
+  </div>
+  <div class="section section-hidden" id="sec-alarm">
+    <div class="card">
+      <div class="section-label">ブラウザ通知アラームについて</div>
+      <p style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:12px;">
+        アラームをセットすると、指定した時刻にこのアプリから<strong>ブラウザ通知</strong>でお知らせします。<br>
+        ※ アプリ（タブ）が開いている間のみ動作します。
+      </p>
+      <div id="notifStatusCard"></div>
+    </div>
+    <div class="card">
+      <div class="section-label">アラーム付きメモ一覧</div>
+      <div id="alarmMemoList"></div>
+    </div>
+  </div>
+  <div class="section section-hidden" id="sec-stats">
+    <div class="stats-grid" id="statsGrid"></div>
+    <div id="catBreakdown"></div>
+  </div>
+</div>
+<div class="alarm-overlay" id="alarmOverlay">
+  <div class="alarm-popup">
+    <span class="alarm-icon">🔔</span>
+    <div class="alarm-popup-title" id="alarmPopupTitle">アラーム</div>
+    <div class="alarm-popup-body" id="alarmPopupBody"></div>
+    <button class="alarm-ok-btn" onclick="dismissAlarm()">確認しました ✓</button>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+const SUPABASE_URL='https://nkrtnmsliowrucrkgxsa.supabase.co';
+const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5rcnRubXNsaW93cnVjcmtneHNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0MzUxMzcsImV4cCI6MjA5MTAxMTEzN30.f3-tP8ryDOogNhlewv_ZfFJGpWBVW2h2yx7N3qfIyc0';
+const{createClient}=supabase;
+const db=createClient(SUPABASE_URL,SUPABASE_KEY);
+const CATS=[
+  {id:'urgent',label:'🔥 緊急',color:'#FCEBEB',textColor:'#A32D2D'},
+  {id:'meeting',label:'💬 会議',color:'#E6F1FB',textColor:'#185FA5'},
+  {id:'project',label:'📁 PJ',color:'#EEEDFE',textColor:'#534AB7'},
+  {id:'task',label:'✅ タスク',color:'#EAF3DE',textColor:'#3B6D11'},
+  {id:'other',label:'📝 その他',color:'#F1EFE8',textColor:'#5F5E5A'},
+];
+let memos=[],selCat='task',filterCat='all',voiceMode='hold',isListening=false,recognition=null,voiceFlag=false,alarmOn=false;
+// アラームタイマー管理: {memoId: timeoutId}
+const alarmTimers={};
 
-# ダウンロードしたindex.htmlをリポジトリのルート（またはpublic/）にコピー
-cp ~/Downloads/index.html ./index.html
+function getCat(id){return CATS.find(c=>c.id===id)||CATS[4];}
+function fmt(ts){const d=new Date(ts);return`${d.getMonth()+1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;}
+function fmtDt(iso){const d=new Date(iso);return`${d.getMonth()+1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;}
+function pad(n){return String(n).padStart(2,'0');}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
 
-# コミット＆プッシュ
-git add index.html
-git commit -m "アラームをブラウザ通知に変更"
-git push origin main
+// ===== ブラウザ通知 =====
+function getNotifStatus(){
+  if(!('Notification' in window))return 'unsupported';
+  return Notification.permission; // 'default'|'granted'|'denied'
+}
+
+async function requestNotifPermission(){
+  if(!('Notification' in window)){showToast('このブラウザは通知未対応です');return;}
+  const result=await Notification.requestPermission();
+  updateNotifUI();
+  if(result==='granted'){showToast('通知が許可されました 🔔');}
+  else if(result==='denied'){showToast('通知がブロックされています。ブラウザ設定から許可してください。');}
+}
+
+function updateNotifUI(){
+  const status=getNotifStatus();
+  const hint=document.getElementById('notifHint');
+  const btn=document.getElementById('notifAllowBtn');
+  if(status==='granted'){
+    hint.className='notif-hint';
+    hint.textContent='✅ 通知が許可されています。アラーム時刻にお知らせします。';
+    btn.style.display='none';
+  }else if(status==='denied'){
+    hint.className='notif-hint warn';
+    hint.textContent='⚠️ 通知がブロックされています。ブラウザの設定から「通知を許可」してください。';
+    btn.style.display='none';
+  }else if(status==='unsupported'){
+    hint.className='notif-hint warn';
+    hint.textContent='⚠️ このブラウザは通知に対応していません。';
+    btn.style.display='none';
+  }else{
+    // default
+    hint.className='notif-hint';
+    hint.textContent='🔔 通知を許可するとアラーム時刻にお知らせします';
+    btn.style.display='block';
+  }
+}
+
+function fireAlarm(memo){
+  // アプリ内ポップアップ
+  document.getElementById('alarmPopupTitle').textContent='⏰ アラーム';
+  document.getElementById('alarmPopupBody').innerHTML=
+    `<div style="font-size:15px;font-weight:500;margin-bottom:6px;">${memo.text}</div>
+     <div style="font-size:13px;color:var(--text3);">${fmtDt(memo.alarm)}</div>`;
+  document.getElementById('alarmOverlay').classList.add('show');
+
+  // ブラウザ通知
+  if(getNotifStatus()==='granted'){
+    try{
+      new Notification('⏰ 仕事メモ アラーム',{
+        body:memo.text,
+        icon:'/favicon.ico',
+        tag:'shigoto-memo-alarm-'+memo.id,
+      });
+    }catch(e){console.warn('Notification error:',e);}
+  }
+
+  // DBのalarm_firedを更新
+  db.from('memos').update({alarm_fired:true}).eq('id',memo.id).then(()=>{
+    const m=memos.find(m=>m.id===memo.id);
+    if(m)m.alarm_fired=true;
+  });
+}
+
+function scheduleAlarms(memoList){
+  const now=Date.now();
+  memoList.forEach(m=>{
+    if(!m.alarm||m.done||m.alarm_fired)return;
+    const fireAt=new Date(m.alarm).getTime();
+    if(fireAt<=now)return; // 過去のアラームはスキップ
+    if(alarmTimers[m.id])return; // すでにセット済み
+    const delay=fireAt-now;
+    alarmTimers[m.id]=setTimeout(()=>{
+      delete alarmTimers[m.id];
+      fireAlarm(m);
+    },delay);
+  });
+}
+
+function clearAlarmTimer(id){
+  if(alarmTimers[id]){clearTimeout(alarmTimers[id]);delete alarmTimers[id];}
+}
+
+// ===== データ =====
+async function loadMemos(){
+  try{
+    const{data,error}=await db.from('memos').select('*').order('ts',{ascending:false});
+    if(error)throw error;
+    memos=data||[];
+    scheduleAlarms(memos);
+    updateHeader();
+  }catch(e){
+    console.error('loadMemos error:',e);
+    showToast('データ読み込みエラー: '+e.message);
+  }
+}
+
+async function addMemo(){
+  const txt=document.getElementById('memoInput').value.trim();
+  if(!txt){showToast('メモを入力してください');return;}
+  const dt=alarmOn?document.getElementById('alarmDatetime').value:null;
+  if(alarmOn&&!dt){showToast('アラームの日時を設定してください');return;}
+  if(alarmOn&&new Date(dt).getTime()<=Date.now()){showToast('アラームは未来の日時にしてください');return;}
+
+  // 通知許可を先にリクエスト
+  if(alarmOn&&getNotifStatus()==='default'){
+    await requestNotifPermission();
+  }
+
+  document.getElementById('addBtn').disabled=true;
+  try{
+    const{data,error}=await db.from('memos').insert([{
+      text:txt,cat:selCat,done:false,
+      voice:voiceFlag,alarm:dt||null,
+      alarm_fired:false,ts:Date.now()
+    }]).select();
+    if(error)throw error;
+    const newMemo=data[0];
+    memos.unshift(newMemo);
+    if(dt)scheduleAlarms([newMemo]);
+    document.getElementById('memoInput').value='';
+    voiceFlag=false;alarmOn=false;
+    document.getElementById('alarmToggle').classList.remove('on');
+    document.getElementById('alarmFields').classList.remove('visible');
+    setVS('マイクボタンで話してメモできます',false);
+    updateHeader();
+    showToast(dt?'メモを追加しました ⏰ アラームをセット':'メモを追加しました ✓');
+    switchTab('list');filterCat='all';renderFilter();renderList();
+  }catch(e){
+    showToast('保存エラー: '+e.message);console.error(e);
+  }
+  document.getElementById('addBtn').disabled=false;
+}
+
+function dismissAlarm(){
+  document.getElementById('alarmOverlay').classList.remove('show');
+  switchTab('list');filterCat='all';renderFilter();renderList();updateHeader();
+}
+
+function updateHeader(){
+  const u=memos.filter(m=>!m.done).length;
+  document.getElementById('headerSub').textContent=u+'件の未チェック';
+}
+
+// ===== 音声入力 =====
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+if(SR){
+  recognition=new SR();recognition.lang='ja-JP';recognition.interimResults=true;recognition.continuous=false;
+  recognition.onresult=function(e){
+    let interim='',final='';
+    for(let i=e.resultIndex;i<e.results.length;i++){if(e.results[i].isFinal)final+=e.results[i][0].transcript;else interim+=e.results[i][0].transcript;}
+    const inp=document.getElementById('memoInput');
+    if(final){inp.value=(inp.value+final).trim();voiceFlag=true;setVS('「'+final+'」と認識しました',false);}
+    else if(interim)setVS('聞こえています: '+interim,true);
+  };
+  recognition.onerror=function(e){
+    let msg='エラーが発生しました';
+    if(e.error==='not-allowed')msg='マイクの許可が必要です';
+    else if(e.error==='no-speech')msg='声が聞こえませんでした。もう一度どうぞ';
+    setVS(msg,false);stopL();
+  };
+  recognition.onend=function(){if(voiceMode==='toggle'&&isListening){try{recognition.start();}catch(e){}}else stopL();};
+}else{
+  document.getElementById('voiceSection').innerHTML='<p style="font-size:13px;color:var(--text3);padding:0.5rem 0;">音声入力はChrome/Safariで対応しています</p>';
+}
+function setVS(msg,act){const e=document.getElementById('voiceStatus');e.textContent=msg;e.classList.toggle('active',act);}
+function setVoiceMode(m){voiceMode=m;document.getElementById('vmode-hold').classList.toggle('active',m==='hold');document.getElementById('vmode-toggle').classList.toggle('active',m==='toggle');document.getElementById('voiceHint').textContent=m==='hold'?'押している間だけ録音するモードです':'ボタンを押してON、もう一度押してOFFにするモードです';setVS('マイクボタンで話してメモできます',false);}
+function startL(){if(!recognition)return;isListening=true;document.getElementById('micBtn').classList.add('listening');document.getElementById('micBtn').textContent='🔴';setVS('聞いています...',true);try{recognition.start();}catch(e){}}
+function stopL(){isListening=false;document.getElementById('micBtn').classList.remove('listening');document.getElementById('micBtn').textContent='🎙';setVS('マイクボタンで話してメモできます',false);try{recognition.stop();}catch(e){}}
+function onMicDown(e){e.preventDefault();if(voiceMode==='hold')startL();else{if(isListening)stopL();else startL();}}
+function onMicUp(e){e.preventDefault();if(voiceMode==='hold'&&isListening)stopL();}
+
+// ===== UI レンダリング =====
+function renderCatChips(){document.getElementById('catChips').innerHTML=CATS.map(c=>`<div class="cat-chip${selCat===c.id?' sel':''}" onclick="selectCat('${c.id}')">${c.label}</div>`).join('');}
+function selectCat(id){selCat=id;renderCatChips();}
+function toggleAlarmField(){
+  alarmOn=!alarmOn;
+  document.getElementById('alarmToggle').classList.toggle('on',alarmOn);
+  document.getElementById('alarmFields').classList.toggle('visible',alarmOn);
+  if(alarmOn){
+    const d=new Date(Date.now()+3600000);
+    document.getElementById('alarmDatetime').value=`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    updateNotifUI();
+  }
+}
+function renderFilter(){const all=[{id:'all',label:'すべて'},...CATS];document.getElementById('filterChips').innerHTML=all.map(c=>`<div class="filter-chip${filterCat===c.id?' active':''}" onclick="setFilter('${c.id}')">${c.label}</div>`).join('');}
+function setFilter(id){filterCat=id;renderFilter();renderList();}
+function renderList(){
+  const filtered=filterCat==='all'?memos:memos.filter(m=>m.cat===filterCat);
+  const el=document.getElementById('memoList');
+  if(!filtered.length){el.innerHTML='<div class="empty-msg">メモがありません<br>「メモする」タブから追加しよう</div>';return;}
+  const now=Date.now();
+  el.innerHTML=filtered.map(m=>{
+    const c=getCat(m.cat);
+    const overdue=m.alarm&&!m.done&&new Date(m.alarm).getTime()<now;
+    return`<div class="memo-item${m.done?' done':''}${overdue?' overdue':''}">
+      <div class="memo-meta">
+        <span class="memo-cat-badge" style="background:${c.color};color:${c.textColor}">${c.label}</span>
+        ${m.voice?'<span class="tag tag-voice">🎙 音声</span>':''}
+        ${m.alarm&&!m.done?`<span class="tag ${overdue?'tag-overdue':'tag-alarm'}">${overdue?'⚠️ 期限切れ':'⏰ アラームあり'}</span>`:''}
+        <span class="memo-time">${fmt(m.ts)}</span>
+      </div>
+      <div class="memo-text">${m.text}</div>
+      ${m.alarm&&!m.done?`<div class="memo-alarm-time">⏰ ${fmtDt(m.alarm)}</div>`:''}
+      <div class="memo-actions">
+        ${m.done?`<button class="action-btn" onclick="toggleDone(${m.id})">未完了に戻す</button>`:`<button class="action-btn check-btn" onclick="toggleDone(${m.id})">✓ 完了</button>`}
+        <button class="action-btn del-btn" onclick="deleteMemo(${m.id})">削除</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+async function toggleDone(id){
+  const m=memos.find(m=>m.id===id);if(!m)return;
+  const{error}=await db.from('memos').update({done:!m.done}).eq('id',id);
+  if(error){showToast('更新に失敗しました');return;}
+  m.done=!m.done;
+  if(m.done)clearAlarmTimer(id);
+  renderList();updateHeader();
+}
+async function deleteMemo(id){
+  if(!confirm('このメモを削除しますか？'))return;
+  const{error}=await db.from('memos').delete().eq('id',id);
+  if(error){showToast('削除に失敗しました');return;}
+  clearAlarmTimer(id);
+  memos=memos.filter(m=>m.id!==id);renderList();updateHeader();
+}
+function renderAlarmTab(){
+  // 通知ステータスカード
+  const status=getNotifStatus();
+  const sc=document.getElementById('notifStatusCard');
+  if(status==='granted'){
+    sc.innerHTML=`<div style="background:var(--success-bg);border:0.5px solid var(--success-border);border-radius:var(--radius-sm);padding:10px 12px;font-size:13px;color:var(--success-text);line-height:1.6;">✅ 通知が許可されています。アラーム時刻にお知らせします。</div>`;
+  }else if(status==='denied'){
+    sc.innerHTML=`<div style="background:var(--danger-bg);border:0.5px solid var(--danger-border);border-radius:var(--radius-sm);padding:10px 12px;font-size:13px;color:var(--danger-text);line-height:1.6;">🚫 通知がブロックされています。ブラウザのサイト設定から通知を許可してください。</div>`;
+  }else if(status==='unsupported'){
+    sc.innerHTML=`<div style="background:var(--warning-bg);border:0.5px solid var(--warning-border);border-radius:var(--radius-sm);padding:10px 12px;font-size:13px;color:var(--warning-text);line-height:1.6;">⚠️ このブラウザは通知に対応していません。アプリ内ポップアップでお知らせします。</div>`;
+  }else{
+    sc.innerHTML=`<div style="background:var(--warning-bg);border:0.5px solid var(--warning-border);border-radius:var(--radius-sm);padding:10px 12px;font-size:13px;color:var(--warning-text);line-height:1.6;margin-bottom:8px;">🔔 通知を許可すると、アラーム時刻に通知でお知らせします。</div>
+    <button class="notif-allow-btn" onclick="requestNotifPermission().then(renderAlarmTab)">通知を許可する</button>`;
+  }
+
+  const alarmed=memos.filter(m=>m.alarm&&!m.done);
+  const el=document.getElementById('alarmMemoList');
+  if(!alarmed.length){el.innerHTML='<div style="font-size:13px;color:var(--text3);padding:0.5rem 0;">アラーム付きのメモはありません</div>';return;}
+  const now=Date.now();
+  el.innerHTML=alarmed.map(m=>{
+    const c=getCat(m.cat);const ov=new Date(m.alarm).getTime()<now;
+    return`<div style="padding:10px 0;border-bottom:0.5px solid var(--border);">
+      <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:4px;">
+        <div style="flex:1;">
+          <div style="font-size:13px;line-height:1.5;margin-bottom:5px;">${m.text}</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <span style="font-size:11px;padding:2px 8px;border-radius:4px;font-weight:500;background:${c.color};color:${c.textColor}">${c.label}</span>
+            <span style="font-size:11px;color:${ov?'var(--danger-text)':'var(--warning-text)'};">⏰ ${fmtDt(m.alarm)}${ov?' (期限切れ)':''}</span>
+          </div>
+        </div>
+        <button class="action-btn check-btn" style="font-size:12px;padding:4px 10px;flex-shrink:0;" onclick="toggleDone(${m.id});setTimeout(renderAlarmTab,500)">✓ 完了</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function renderStats(){
+  const total=memos.length,done=memos.filter(m=>m.done).length,undone=total-done;
+  document.getElementById('statsGrid').innerHTML=`
+    <div class="stat-card"><div class="stat-label">未チェック</div><div class="stat-val">${undone}</div><div class="stat-sub">件</div></div>
+    <div class="stat-card"><div class="stat-label">完了済み</div><div class="stat-val">${done}</div><div class="stat-sub">件</div></div>
+    <div class="stat-card"><div class="stat-label">合計メモ</div><div class="stat-val">${total}</div><div class="stat-sub">件</div></div>
+    <div class="stat-card"><div class="stat-label">完了率</div><div class="stat-val">${total?Math.round(done/total*100):0}</div><div class="stat-sub">%</div></div>`;
+  document.getElementById('catBreakdown').innerHTML=CATS.map(c=>{
+    const items=memos.filter(m=>m.cat===c.id);if(!items.length)return'';
+    const d=items.filter(m=>m.done).length,pct=Math.round(d/items.length*100);
+    return`<div class="card" style="margin-bottom:8px;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px;"><span style="font-size:14px;font-weight:500;">${c.label}</span><span style="font-size:12px;color:var(--text2);">${d}/${items.length}件完了</span></div>
+      <div style="height:5px;background:var(--bg3);border-radius:3px;"><div style="height:5px;background:${c.textColor};border-radius:3px;width:${pct}%;transition:width 0.4s;"></div></div>
+    </div>`;
+  }).join('');
+}
+function switchTab(tab){
+  ['add','list','alarm','stats'].forEach((t,i)=>{
+    document.getElementById('sec-'+t).classList.toggle('section-hidden',t!==tab);
+    document.querySelectorAll('.tab')[i].classList.toggle('active',t===tab);
+  });
+  if(tab==='list'){renderFilter();renderList();}
+  if(tab==='alarm')renderAlarmTab();
+  if(tab==='stats')renderStats();
+  updateHeader();
+}
+async function init(){
+  renderCatChips();
+  await loadMemos();
+  updateHeader();
+  setInterval(loadMemos,30000);
+}
+init();
+</script>
+</body>
+</html>

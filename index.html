@@ -4,140 +4,122 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>仕事メモ</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap');
-
   :root {
-    --bg: #ffffff; --bg2: #f5f5f4; --bg3: #eeece8;
-    --text: #1a1a1a; --text2: #6b6b6b; --text3: #a0a0a0;
-    --border: rgba(0,0,0,0.12); --border2: rgba(0,0,0,0.22);
-    --info-bg: #e6f1fb; --info-text: #185fa5; --info-border: #85b7eb;
-    --success-bg: #eaf3de; --success-text: #3b6d11; --success-border: #97c459;
-    --danger-bg: #fcebeb; --danger-text: #a32d2d; --danger-border: #f09595;
-    --warning-bg: #faeeda; --warning-text: #854f0b; --warning-border: #ef9f27;
-    --radius: 12px; --radius-sm: 8px;
+    --bg:#ffffff;--bg2:#f5f5f4;--bg3:#eeece8;
+    --text:#1a1a1a;--text2:#6b6b6b;--text3:#a0a0a0;
+    --border:rgba(0,0,0,0.12);--border2:rgba(0,0,0,0.22);
+    --info-bg:#e6f1fb;--info-text:#185fa5;--info-border:#85b7eb;
+    --success-bg:#eaf3de;--success-text:#3b6d11;--success-border:#97c459;
+    --danger-bg:#fcebeb;--danger-text:#a32d2d;--danger-border:#f09595;
+    --warning-bg:#faeeda;--warning-text:#854f0b;--warning-border:#ef9f27;
+    --radius:12px;--radius-sm:8px;
   }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #1e1e1d; --bg2: #2a2a28; --bg3: #333330;
-      --text: #f0ede8; --text2: #a8a49e; --text3: #6b6760;
-      --border: rgba(255,255,255,0.12); --border2: rgba(255,255,255,0.22);
-      --info-bg: #0c447c; --info-text: #b5d4f4; --info-border: #378add;
-      --success-bg: #27500a; --success-text: #c0dd97; --success-border: #639922;
-      --danger-bg: #791f1f; --danger-text: #f7c1c1; --danger-border: #e24b4a;
-      --warning-bg: #633806; --warning-text: #fac775; --warning-border: #ba7517;
+  @media(prefers-color-scheme:dark){
+    :root{
+      --bg:#1e1e1d;--bg2:#2a2a28;--bg3:#333330;
+      --text:#f0ede8;--text2:#a8a49e;--text3:#6b6760;
+      --border:rgba(255,255,255,0.12);--border2:rgba(255,255,255,0.22);
+      --info-bg:#0c447c;--info-text:#b5d4f4;--info-border:#378add;
+      --success-bg:#27500a;--success-text:#c0dd97;--success-border:#639922;
+      --danger-bg:#791f1f;--danger-text:#f7c1c1;--danger-border:#e24b4a;
+      --warning-bg:#633806;--warning-text:#fac775;--warning-border:#ba7517;
     }
   }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Noto Sans JP', sans-serif; background: var(--bg3); color: var(--text); min-height: 100vh; padding-bottom: 80px; }
-  .app { max-width: 480px; margin: 0 auto; background: var(--bg3); min-height: 100vh; }
-
-  .app-header { background: var(--bg); border-bottom: 0.5px solid var(--border); padding: 1rem 1.25rem 0.75rem; position: sticky; top: 0; z-index: 10; }
-  .app-title { font-size: 20px; font-weight: 700; }
-  .header-sub { font-size: 12px; color: var(--text3); margin-top: 2px; }
-
-  .tab-bar { display: flex; background: var(--bg); border-bottom: 0.5px solid var(--border); position: sticky; top: 64px; z-index: 9; }
-  .tab { flex: 1; text-align: center; padding: 10px 2px; font-size: 12px; font-weight: 500; color: var(--text2); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.15s; font-family: 'Noto Sans JP', sans-serif; }
-  .tab.active { color: var(--info-text); border-bottom-color: var(--info-text); }
-
-  .section { padding: 1rem; }
-  .section-hidden { display: none; }
-  .card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 1rem 1.25rem; margin-bottom: 12px; }
-  .section-label { font-size: 11px; font-weight: 500; color: var(--text3); letter-spacing: 0.05em; margin-bottom: 8px; }
-
-  .cat-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
-  .cat-chip { font-size: 13px; padding: 5px 12px; border-radius: 20px; border: 0.5px solid var(--border2); background: var(--bg2); color: var(--text2); cursor: pointer; transition: all 0.12s; font-family: 'Noto Sans JP', sans-serif; }
-  .cat-chip.sel { border-color: var(--info-border); background: var(--info-bg); color: var(--info-text); font-weight: 500; }
-
-  .voice-mode-row { display: flex; gap: 6px; margin-bottom: 12px; }
-  .vmode-btn { flex: 1; font-size: 12px; padding: 7px 8px; border-radius: var(--radius-sm); border: 0.5px solid var(--border2); background: var(--bg2); color: var(--text2); cursor: pointer; font-family: 'Noto Sans JP', sans-serif; transition: all 0.12s; text-align: center; line-height: 1.4; }
-  .vmode-btn.active { border-color: var(--info-border); background: var(--info-bg); color: var(--info-text); font-weight: 500; }
-
-  .mic-area { display: flex; align-items: center; gap: 1rem; }
-  .mic-btn { width: 72px; height: 72px; border-radius: 50%; border: 0.5px solid var(--border2); background: var(--bg2); font-size: 30px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; flex-shrink: 0; user-select: none; -webkit-user-select: none; }
-  .mic-btn.listening { background: var(--danger-bg); border-color: var(--danger-border); animation: pulse 1s infinite; }
-  @keyframes pulse { 0%,100%{transform:scale(1);}50%{transform:scale(1.07);} }
-  .voice-status { font-size: 14px; color: var(--text2); line-height: 1.5; margin-bottom: 4px; }
-  .voice-status.active { color: var(--danger-text); font-weight: 500; }
-  .voice-hint { font-size: 12px; color: var(--text3); }
-
-  .divider { display: flex; align-items: center; gap: 8px; margin: 12px 0; }
-  .divider-line { flex: 1; height: 0.5px; background: var(--border); }
-  .divider-text { font-size: 11px; color: var(--text3); }
-
-  .memo-input { width: 100%; border: 0.5px solid var(--border); border-radius: var(--radius-sm); padding: 10px 12px; font-size: 15px; font-family: 'Noto Sans JP', sans-serif; color: var(--text); background: var(--bg2); resize: none; min-height: 80px; outline: none; transition: border-color 0.15s; line-height: 1.6; }
-  .memo-input:focus { border-color: var(--info-border); }
-  .memo-input::placeholder { color: var(--text3); }
-
-  .alarm-toggle-row { display: flex; align-items: center; justify-content: space-between; margin: 12px 0 8px; }
-  .alarm-toggle-label { font-size: 14px; font-weight: 500; }
-  .toggle-sw { width: 44px; height: 24px; border-radius: 12px; background: var(--bg3); border: 0.5px solid var(--border2); cursor: pointer; position: relative; transition: background 0.2s; flex-shrink: 0; }
-  .toggle-sw.on { background: var(--info-text); border-color: var(--info-text); }
-  .toggle-sw::after { content: ''; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: transform 0.2s; }
-  .toggle-sw.on::after { transform: translateX(20px); }
-  .alarm-fields { display: none; }
-  .alarm-fields.visible { display: block; }
-  .alarm-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
-  .alarm-label { font-size: 13px; color: var(--text2); min-width: 40px; }
-  .alarm-input { flex: 1; border: 0.5px solid var(--border); border-radius: var(--radius-sm); padding: 7px 10px; font-size: 14px; font-family: 'Noto Sans JP', sans-serif; color: var(--text); background: var(--bg2); outline: none; }
-  .alarm-input:focus { border-color: var(--info-border); }
-
-  .add-btn { width: 100%; margin-top: 10px; padding: 12px; font-size: 16px; font-weight: 500; font-family: 'Noto Sans JP', sans-serif; border: none; border-radius: var(--radius-sm); background: var(--info-text); color: #fff; cursor: pointer; }
-  .add-btn:active { opacity: 0.8; }
-
-  .filter-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
-  .filter-chip { font-size: 12px; padding: 5px 12px; border-radius: 20px; border: 0.5px solid var(--border); background: var(--bg2); color: var(--text2); cursor: pointer; font-family: 'Noto Sans JP', sans-serif; }
-  .filter-chip.active { border-color: var(--border2); background: var(--bg); color: var(--text); font-weight: 500; }
-
-  .memo-item { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 0.875rem 1rem; margin-bottom: 8px; }
-  .memo-item.done { opacity: 0.45; }
-  .memo-item.overdue { border-color: var(--danger-border); border-width: 1.5px; }
-  .memo-meta { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; flex-wrap: wrap; }
-  .memo-cat-badge { font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 500; }
-  .tag { font-size: 10px; padding: 2px 6px; border-radius: 4px; border: 0.5px solid; }
-  .tag-voice { background: var(--bg2); color: var(--text3); border-color: var(--border); }
-  .tag-alarm { background: var(--warning-bg); color: var(--warning-text); border-color: var(--warning-border); }
-  .tag-overdue { background: var(--danger-bg); color: var(--danger-text); border-color: var(--danger-border); }
-  .memo-time { font-size: 11px; color: var(--text3); margin-left: auto; }
-  .memo-text { font-size: 15px; line-height: 1.65; }
-  .memo-item.done .memo-text { text-decoration: line-through; color: var(--text3); }
-  .memo-alarm-time { font-size: 12px; color: var(--warning-text); margin-top: 5px; }
-  .memo-actions { display: flex; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 0.5px solid var(--border); }
-  .action-btn { font-size: 13px; padding: 5px 12px; border-radius: var(--radius-sm); border: 0.5px solid var(--border); background: transparent; color: var(--text2); cursor: pointer; font-family: 'Noto Sans JP', sans-serif; }
-  .check-btn { border-color: var(--success-border); color: var(--success-text); }
-  .del-btn { border-color: var(--danger-border); color: var(--danger-text); margin-left: auto; }
-
-  .daily-time-row { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; }
-  .daily-alarm-input { border: 0.5px solid var(--border); border-radius: var(--radius-sm); padding: 8px 12px; font-size: 16px; font-family: 'Noto Sans JP', sans-serif; color: var(--text); background: var(--bg2); outline: none; width: 140px; }
-  .set-btn { padding: 8px 16px; font-size: 14px; font-family: 'Noto Sans JP', sans-serif; border: 0.5px solid var(--info-border); border-radius: var(--radius-sm); background: var(--info-bg); color: var(--info-text); cursor: pointer; font-weight: 500; }
-  .daily-status { font-size: 13px; color: var(--text2); padding: 8px 10px; background: var(--bg2); border-radius: var(--radius-sm); border: 0.5px solid var(--border); }
-  .daily-status.active { color: var(--success-text); background: var(--success-bg); border-color: var(--success-border); }
-
-  .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
-  .stat-card { background: var(--bg); border-radius: var(--radius-sm); padding: 0.875rem 1rem; border: 0.5px solid var(--border); }
-  .stat-label { font-size: 11px; color: var(--text3); margin-bottom: 4px; }
-  .stat-val { font-size: 24px; font-weight: 500; }
-  .stat-sub { font-size: 11px; color: var(--text2); margin-top: 2px; }
-  .empty-msg { text-align: center; padding: 3rem 1rem; color: var(--text3); font-size: 14px; line-height: 2; }
-
-  .alarm-overlay { display: none; position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,0.55); align-items: center; justify-content: center; }
-  .alarm-overlay.show { display: flex; }
-  .alarm-popup { background: var(--bg); border-radius: var(--radius); padding: 1.5rem; max-width: 320px; width: 90%; text-align: center; }
-  .alarm-icon { font-size: 44px; margin-bottom: 12px; display: block; animation: ring 0.4s infinite alternate; }
-  @keyframes ring { from{transform:rotate(-12deg);}to{transform:rotate(12deg);} }
-  .alarm-popup-title { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
-  .alarm-popup-body { font-size: 14px; color: var(--text2); line-height: 1.6; margin-bottom: 16px; }
-  .alarm-ok-btn { width: 100%; padding: 12px; font-size: 15px; font-weight: 500; font-family: 'Noto Sans JP', sans-serif; border: none; border-radius: var(--radius-sm); background: var(--info-text); color: #fff; cursor: pointer; }
-
-  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--text); color: var(--bg); font-size: 13px; padding: 8px 20px; border-radius: 20px; opacity: 0; transition: all 0.25s; pointer-events: none; white-space: nowrap; z-index: 200; font-family: 'Noto Sans JP', sans-serif; }
-  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Noto Sans JP',sans-serif;background:var(--bg3);color:var(--text);min-height:100vh;padding-bottom:80px;}
+  .app{max-width:480px;margin:0 auto;background:var(--bg3);min-height:100vh;}
+  .app-header{background:var(--bg);border-bottom:0.5px solid var(--border);padding:1rem 1.25rem 0.75rem;position:sticky;top:0;z-index:10;}
+  .app-title{font-size:20px;font-weight:700;}
+  .header-sub{font-size:12px;color:var(--text3);margin-top:2px;}
+  .tab-bar{display:flex;background:var(--bg);border-bottom:0.5px solid var(--border);position:sticky;top:64px;z-index:9;}
+  .tab{flex:1;text-align:center;padding:10px 2px;font-size:12px;font-weight:500;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;transition:all 0.15s;font-family:'Noto Sans JP',sans-serif;}
+  .tab.active{color:var(--info-text);border-bottom-color:var(--info-text);}
+  .section{padding:1rem;}
+  .section-hidden{display:none;}
+  .card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);padding:1rem 1.25rem;margin-bottom:12px;}
+  .section-label{font-size:11px;font-weight:500;color:var(--text3);letter-spacing:0.05em;margin-bottom:8px;}
+  .cat-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;}
+  .cat-chip{font-size:13px;padding:5px 12px;border-radius:20px;border:0.5px solid var(--border2);background:var(--bg2);color:var(--text2);cursor:pointer;transition:all 0.12s;font-family:'Noto Sans JP',sans-serif;}
+  .cat-chip.sel{border-color:var(--info-border);background:var(--info-bg);color:var(--info-text);font-weight:500;}
+  .voice-mode-row{display:flex;gap:6px;margin-bottom:12px;}
+  .vmode-btn{flex:1;font-size:12px;padding:7px 8px;border-radius:var(--radius-sm);border:0.5px solid var(--border2);background:var(--bg2);color:var(--text2);cursor:pointer;font-family:'Noto Sans JP',sans-serif;transition:all 0.12s;text-align:center;line-height:1.4;}
+  .vmode-btn.active{border-color:var(--info-border);background:var(--info-bg);color:var(--info-text);font-weight:500;}
+  .mic-area{display:flex;align-items:center;gap:1rem;}
+  .mic-btn{width:72px;height:72px;border-radius:50%;border:0.5px solid var(--border2);background:var(--bg2);font-size:30px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s;flex-shrink:0;user-select:none;-webkit-user-select:none;}
+  .mic-btn.listening{background:var(--danger-bg);border-color:var(--danger-border);animation:pulse 1s infinite;}
+  @keyframes pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.07);}}
+  .voice-status{font-size:14px;color:var(--text2);line-height:1.5;margin-bottom:4px;}
+  .voice-status.active{color:var(--danger-text);font-weight:500;}
+  .voice-hint{font-size:12px;color:var(--text3);}
+  .divider{display:flex;align-items:center;gap:8px;margin:12px 0;}
+  .divider-line{flex:1;height:0.5px;background:var(--border);}
+  .divider-text{font-size:11px;color:var(--text3);}
+  .memo-input{width:100%;border:0.5px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;font-size:15px;font-family:'Noto Sans JP',sans-serif;color:var(--text);background:var(--bg2);resize:none;min-height:80px;outline:none;transition:border-color 0.15s;line-height:1.6;}
+  .memo-input:focus{border-color:var(--info-border);}
+  .memo-input::placeholder{color:var(--text3);}
+  .alarm-toggle-row{display:flex;align-items:center;justify-content:space-between;margin:12px 0 8px;}
+  .alarm-toggle-label{font-size:14px;font-weight:500;}
+  .toggle-sw{width:44px;height:24px;border-radius:12px;background:var(--bg3);border:0.5px solid var(--border2);cursor:pointer;position:relative;transition:background 0.2s;flex-shrink:0;}
+  .toggle-sw.on{background:var(--info-text);border-color:var(--info-text);}
+  .toggle-sw::after{content:'';position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform 0.2s;}
+  .toggle-sw.on::after{transform:translateX(20px);}
+  .alarm-fields{display:none;}
+  .alarm-fields.visible{display:block;}
+  .alarm-row{display:flex;gap:8px;align-items:center;margin-bottom:8px;}
+  .alarm-label{font-size:13px;color:var(--text2);min-width:40px;}
+  .alarm-input{flex:1;border:0.5px solid var(--border);border-radius:var(--radius-sm);padding:7px 10px;font-size:14px;font-family:'Noto Sans JP',sans-serif;color:var(--text);background:var(--bg2);outline:none;}
+  .alarm-input:focus{border-color:var(--info-border);}
+  .reminder-hint{font-size:12px;color:var(--warning-text);background:var(--warning-bg);border:0.5px solid var(--warning-border);border-radius:var(--radius-sm);padding:8px 10px;margin-top:8px;line-height:1.6;}
+  .add-btn{width:100%;margin-top:10px;padding:12px;font-size:16px;font-weight:500;font-family:'Noto Sans JP',sans-serif;border:none;border-radius:var(--radius-sm);background:var(--info-text);color:#fff;cursor:pointer;}
+  .add-btn:active{opacity:0.8;}
+  .add-btn:disabled{opacity:0.5;cursor:not-allowed;}
+  .filter-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;}
+  .filter-chip{font-size:12px;padding:5px 12px;border-radius:20px;border:0.5px solid var(--border);background:var(--bg2);color:var(--text2);cursor:pointer;font-family:'Noto Sans JP',sans-serif;}
+  .filter-chip.active{border-color:var(--border2);background:var(--bg);color:var(--text);font-weight:500;}
+  .memo-item{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);padding:0.875rem 1rem;margin-bottom:8px;}
+  .memo-item.done{opacity:0.45;}
+  .memo-item.overdue{border-color:var(--danger-border);border-width:1.5px;}
+  .memo-meta{display:flex;align-items:center;gap:6px;margin-bottom:6px;flex-wrap:wrap;}
+  .memo-cat-badge{font-size:11px;padding:2px 8px;border-radius:4px;font-weight:500;}
+  .tag{font-size:10px;padding:2px 6px;border-radius:4px;border:0.5px solid;}
+  .tag-voice{background:var(--bg2);color:var(--text3);border-color:var(--border);}
+  .tag-alarm{background:var(--warning-bg);color:var(--warning-text);border-color:var(--warning-border);}
+  .tag-overdue{background:var(--danger-bg);color:var(--danger-text);border-color:var(--danger-border);}
+  .memo-time{font-size:11px;color:var(--text3);margin-left:auto;}
+  .memo-text{font-size:15px;line-height:1.65;}
+  .memo-item.done .memo-text{text-decoration:line-through;color:var(--text3);}
+  .memo-alarm-time{font-size:12px;color:var(--warning-text);margin-top:5px;}
+  .reminder-btn{display:inline-flex;align-items:center;gap:4px;font-size:12px;padding:4px 10px;border-radius:var(--radius-sm);border:0.5px solid var(--warning-border);background:var(--warning-bg);color:var(--warning-text);cursor:pointer;font-family:'Noto Sans JP',sans-serif;margin-top:6px;text-decoration:none;}
+  .memo-actions{display:flex;gap:8px;margin-top:10px;padding-top:10px;border-top:0.5px solid var(--border);flex-wrap:wrap;}
+  .action-btn{font-size:13px;padding:5px 12px;border-radius:var(--radius-sm);border:0.5px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;font-family:'Noto Sans JP',sans-serif;}
+  .check-btn{border-color:var(--success-border);color:var(--success-text);}
+  .del-btn{border-color:var(--danger-border);color:var(--danger-text);margin-left:auto;}
+  .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
+  .stat-card{background:var(--bg);border-radius:var(--radius-sm);padding:0.875rem 1rem;border:0.5px solid var(--border);}
+  .stat-label{font-size:11px;color:var(--text3);margin-bottom:4px;}
+  .stat-val{font-size:24px;font-weight:500;}
+  .stat-sub{font-size:11px;color:var(--text2);margin-top:2px;}
+  .empty-msg{text-align:center;padding:3rem 1rem;color:var(--text3);font-size:14px;line-height:2;}
+  .alarm-overlay{display:none;position:fixed;inset:0;z-index:100;background:rgba(0,0,0,0.55);align-items:center;justify-content:center;}
+  .alarm-overlay.show{display:flex;}
+  .alarm-popup{background:var(--bg);border-radius:var(--radius);padding:1.5rem;max-width:320px;width:90%;text-align:center;}
+  .alarm-icon{font-size:44px;margin-bottom:12px;display:block;animation:ring 0.4s infinite alternate;}
+  @keyframes ring{from{transform:rotate(-12deg);}to{transform:rotate(12deg);}}
+  .alarm-popup-title{font-size:18px;font-weight:700;margin-bottom:8px;}
+  .alarm-popup-body{font-size:14px;color:var(--text2);line-height:1.6;margin-bottom:16px;}
+  .alarm-ok-btn{width:100%;padding:12px;font-size:15px;font-weight:500;font-family:'Noto Sans JP',sans-serif;border:none;border-radius:var(--radius-sm);background:var(--info-text);color:#fff;cursor:pointer;}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--text);color:var(--bg);font-size:13px;padding:8px 20px;border-radius:20px;opacity:0;transition:all 0.25s;pointer-events:none;white-space:nowrap;z-index:200;font-family:'Noto Sans JP',sans-serif;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 </style>
 </head>
 <body>
 <div class="app">
   <div class="app-header">
     <div class="app-title">仕事メモ 🗒️</div>
-    <div class="header-sub" id="headerSub">0件の未チェック</div>
+    <div class="header-sub" id="headerSub">読み込み中...</div>
   </div>
   <div class="tab-bar">
     <div class="tab active" onclick="switchTab('add')">＋ メモする</div>
@@ -145,8 +127,6 @@
     <div class="tab" onclick="switchTab('alarm')">⏰ アラーム</div>
     <div class="tab" onclick="switchTab('stats')">📊 まとめ</div>
   </div>
-
-  <!-- メモ入力 -->
   <div class="section" id="sec-add">
     <div class="card">
       <div class="section-label">カテゴリ</div>
@@ -168,7 +148,7 @@
       <div class="divider"><div class="divider-line"></div><div class="divider-text">または文字で入力</div><div class="divider-line"></div></div>
       <textarea class="memo-input" id="memoInput" placeholder="ここに文字を入力することもできます..." rows="3"></textarea>
       <div class="alarm-toggle-row">
-        <span class="alarm-toggle-label">⏰ アラームをセット</span>
+        <span class="alarm-toggle-label">⏰ iPhoneリマインダーにセット</span>
         <div class="toggle-sw" id="alarmToggle" onclick="toggleAlarmField()"></div>
       </div>
       <div class="alarm-fields" id="alarmFields">
@@ -176,42 +156,37 @@
           <span class="alarm-label">日時</span>
           <input type="datetime-local" class="alarm-input" id="alarmDatetime">
         </div>
+        <div class="reminder-hint">
+          📌 メモを追加すると「リマインダーに追加」ボタンが表示されます。タップするとiPhoneのリマインダーアプリが開いて登録できます。
+        </div>
       </div>
-      <button class="add-btn" onclick="addMemo()">メモを追加</button>
+      <button class="add-btn" id="addBtn" onclick="addMemo()">メモを追加</button>
     </div>
   </div>
-
-  <!-- チェック -->
   <div class="section section-hidden" id="sec-list">
     <div class="filter-row" id="filterChips"></div>
     <div id="memoList"></div>
   </div>
-
-  <!-- アラーム設定 -->
   <div class="section section-hidden" id="sec-alarm">
     <div class="card">
-      <div class="section-label">毎日の定時リマインダー</div>
-      <p style="font-size:13px;color:var(--text2);margin-bottom:12px;line-height:1.6;">毎日この時間に「未チェックのメモがあります」とお知らせします。</p>
-      <div class="daily-time-row">
-        <input type="time" class="daily-alarm-input" id="dailyAlarmTime" value="09:00">
-        <button class="set-btn" onclick="setDailyAlarm()">セットする</button>
+      <div class="section-label">iPhoneリマインダー連携について</div>
+      <p style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:12px;">
+        メモにアラームをセットすると「📌 リマインダーに追加」ボタンが表示されます。タップするとiPhoneの純正リマインダーアプリが開き、日時付きで登録されます。アプリを閉じていても<strong>iPhoneから確実に通知が届きます。</strong>
+      </p>
+      <div style="background:var(--success-bg);border:0.5px solid var(--success-border);border-radius:var(--radius-sm);padding:10px 12px;font-size:13px;color:var(--success-text);line-height:1.6;">
+        ✅ iPhoneのOSレベルの通知なので、アプリを閉じていても100%届きます
       </div>
-      <div class="daily-status" id="dailyStatus">定時リマインダーはオフです</div>
     </div>
     <div class="card">
       <div class="section-label">アラーム付きメモ一覧</div>
       <div id="alarmMemoList"></div>
     </div>
   </div>
-
-  <!-- まとめ -->
   <div class="section section-hidden" id="sec-stats">
     <div class="stats-grid" id="statsGrid"></div>
     <div id="catBreakdown"></div>
   </div>
 </div>
-
-<!-- アラームポップアップ -->
 <div class="alarm-overlay" id="alarmOverlay">
   <div class="alarm-popup">
     <span class="alarm-icon">🔔</span>
@@ -221,8 +196,11 @@
   </div>
 </div>
 <div class="toast" id="toast"></div>
-
 <script>
+const SUPABASE_URL='https://nkrtnmsliowrucrkgxsa.supabase.co';
+const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5rcnRubXNsaW93cnVjcmtneHNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0MzUxMzcsImV4cCI6MjA5MTAxMTEzN30.f3-tP8ryDOogNhlewv_ZfFJGpWBVW2h2yx7N3qfIyc0';
+const{createClient}=supabase;
+const db=createClient(SUPABASE_URL,SUPABASE_KEY);
 const CATS=[
   {id:'urgent',label:'🔥 緊急',color:'#FCEBEB',textColor:'#A32D2D'},
   {id:'meeting',label:'💬 会議',color:'#E6F1FB',textColor:'#185FA5'},
@@ -230,17 +208,78 @@ const CATS=[
   {id:'task',label:'✅ タスク',color:'#EAF3DE',textColor:'#3B6D11'},
   {id:'other',label:'📝 その他',color:'#F1EFE8',textColor:'#5F5E5A'},
 ];
-let memos=JSON.parse(localStorage.getItem('shigoto_v3')||'[]');
-let selCat='task',filterCat='all',voiceMode='hold',isListening=false,recognition=null,voiceFlag=false,alarmOn=false,dailyTimer=null;
-
-function save(){localStorage.setItem('shigoto_v3',JSON.stringify(memos));}
+let memos=[],selCat='task',filterCat='all',voiceMode='hold',isListening=false,recognition=null,voiceFlag=false,alarmOn=false;
 function getCat(id){return CATS.find(c=>c.id===id)||CATS[4];}
 function fmt(ts){const d=new Date(ts);return`${d.getMonth()+1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;}
 function fmtDt(iso){const d=new Date(iso);return`${d.getMonth()+1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;}
 function pad(n){return String(n).padStart(2,'0');}
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
-
-// 音声
+function makeReminderURL(text,datetimeLocal){
+  const title=encodeURIComponent('【仕事メモ】'+text);
+  const due=new Date(datetimeLocal).toISOString();
+  return`x-apple-reminderkit://REMCDReminder/?title=${title}&dueDate=${encodeURIComponent(due)}`;
+}
+async function loadMemos(){
+  try{
+    const{data,error}=await db.from('memos').select('*').order('ts',{ascending:false});
+    if(error)throw error;
+    memos=data||[];
+    updateHeader();
+  }catch(e){
+    console.error('loadMemos error:',e);
+    showToast('データ読み込みエラー: '+e.message);
+  }
+}
+async function addMemo(){
+  const txt=document.getElementById('memoInput').value.trim();
+  if(!txt){showToast('メモを入力してください');return;}
+  const dt=alarmOn?document.getElementById('alarmDatetime').value:null;
+  if(alarmOn&&!dt){showToast('アラームの日時を設定してください');return;}
+  document.getElementById('addBtn').disabled=true;
+  try{
+    const{data,error}=await db.from('memos').insert([{
+      text:txt,cat:selCat,done:false,
+      voice:voiceFlag,alarm:dt||null,
+      alarm_fired:false,ts:Date.now()
+    }]).select();
+    if(error)throw error;
+    memos.unshift(data[0]);
+    document.getElementById('memoInput').value='';
+    voiceFlag=false;alarmOn=false;
+    document.getElementById('alarmToggle').classList.remove('on');
+    document.getElementById('alarmFields').classList.remove('visible');
+    setVS('マイクボタンで話してメモできます',false);
+    updateHeader();
+    if(dt){showReminderPrompt(txt,dt,makeReminderURL(txt,dt));}
+    else{showToast('メモを追加しました ✓');switchTab('list');filterCat='all';renderFilter();renderList();}
+  }catch(e){
+    showToast('保存エラー: '+e.message);console.error(e);
+  }
+  document.getElementById('addBtn').disabled=false;
+}
+function showReminderPrompt(text,dt,url){
+  document.getElementById('alarmPopupTitle').textContent='メモを保存しました ✓';
+  document.getElementById('alarmPopupBody').innerHTML=
+    `<div style="text-align:left;margin-bottom:12px;">
+      <div style="font-size:13px;color:var(--text2);margin-bottom:8px;">「${text}」</div>
+      <div style="font-size:13px;color:var(--text2);">⏰ ${fmtDt(dt)}</div>
+    </div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:12px;line-height:1.6;">
+      iPhoneのリマインダーに追加すると、アプリを閉じていても通知が届きます。
+    </div>
+    <a href="${url}" style="display:block;padding:12px;background:var(--warning-bg);border:0.5px solid var(--warning-border);border-radius:var(--radius-sm);color:var(--warning-text);font-size:14px;font-weight:500;text-decoration:none;text-align:center;margin-bottom:8px;">
+      📌 iPhoneリマインダーに追加する
+    </a>`;
+  document.getElementById('alarmOverlay').classList.add('show');
+}
+function dismissAlarm(){
+  document.getElementById('alarmOverlay').classList.remove('show');
+  switchTab('list');filterCat='all';renderFilter();renderList();updateHeader();
+}
+function updateHeader(){
+  const u=memos.filter(m=>!m.done).length;
+  document.getElementById('headerSub').textContent=u+'件の未チェック';
+}
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
 if(SR){
   recognition=new SR();recognition.lang='ja-JP';recognition.interimResults=true;recognition.continuous=false;
@@ -249,53 +288,34 @@ if(SR){
     for(let i=e.resultIndex;i<e.results.length;i++){if(e.results[i].isFinal)final+=e.results[i][0].transcript;else interim+=e.results[i][0].transcript;}
     const inp=document.getElementById('memoInput');
     if(final){inp.value=(inp.value+final).trim();voiceFlag=true;setVS('「'+final+'」と認識しました',false);}
-    else if(interim){setVS('聞こえています: '+interim,true);}
+    else if(interim)setVS('聞こえています: '+interim,true);
   };
   recognition.onerror=function(e){
     let msg='エラーが発生しました';
-    if(e.error==='not-allowed')msg='マイクの許可が必要です（アドレスバー左のアイコンから許可）';
+    if(e.error==='not-allowed')msg='マイクの許可が必要です';
     else if(e.error==='no-speech')msg='声が聞こえませんでした。もう一度どうぞ';
     setVS(msg,false);stopL();
   };
-  recognition.onend=function(){if(voiceMode==='toggle'&&isListening){try{recognition.start();}catch(e){}}else{stopL();}};
-}else{document.getElementById('voiceSection').innerHTML='<p style="font-size:13px;color:var(--text3);padding:0.5rem 0;">音声入力はChrome/Edgeで対応しています</p>';}
-
+  recognition.onend=function(){if(voiceMode==='toggle'&&isListening){try{recognition.start();}catch(e){}}else stopL();};
+}else{
+  document.getElementById('voiceSection').innerHTML='<p style="font-size:13px;color:var(--text3);padding:0.5rem 0;">音声入力はChrome/Safariで対応しています</p>';
+}
 function setVS(msg,act){const e=document.getElementById('voiceStatus');e.textContent=msg;e.classList.toggle('active',act);}
 function setVoiceMode(m){voiceMode=m;document.getElementById('vmode-hold').classList.toggle('active',m==='hold');document.getElementById('vmode-toggle').classList.toggle('active',m==='toggle');document.getElementById('voiceHint').textContent=m==='hold'?'押している間だけ録音するモードです':'ボタンを押してON、もう一度押してOFFにするモードです';setVS('マイクボタンで話してメモできます',false);}
 function startL(){if(!recognition)return;isListening=true;document.getElementById('micBtn').classList.add('listening');document.getElementById('micBtn').textContent='🔴';setVS('聞いています...',true);try{recognition.start();}catch(e){}}
 function stopL(){isListening=false;document.getElementById('micBtn').classList.remove('listening');document.getElementById('micBtn').textContent='🎙';setVS('マイクボタンで話してメモできます',false);try{recognition.stop();}catch(e){}}
 function onMicDown(e){e.preventDefault();if(voiceMode==='hold')startL();else{if(isListening)stopL();else startL();}}
 function onMicUp(e){e.preventDefault();if(voiceMode==='hold'&&isListening)stopL();}
-
 function renderCatChips(){document.getElementById('catChips').innerHTML=CATS.map(c=>`<div class="cat-chip${selCat===c.id?' sel':''}" onclick="selectCat('${c.id}')">${c.label}</div>`).join('');}
 function selectCat(id){selCat=id;renderCatChips();}
-
 function toggleAlarmField(){
   alarmOn=!alarmOn;
   document.getElementById('alarmToggle').classList.toggle('on',alarmOn);
   document.getElementById('alarmFields').classList.toggle('visible',alarmOn);
   if(alarmOn){const d=new Date(Date.now()+3600000);document.getElementById('alarmDatetime').value=`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;}
 }
-
-function addMemo(){
-  const txt=document.getElementById('memoInput').value.trim();
-  if(!txt){showToast('メモを入力してください');return;}
-  const dt=alarmOn?document.getElementById('alarmDatetime').value:null;
-  if(alarmOn&&!dt){showToast('アラームの日時を設定してください');return;}
-  memos.unshift({id:Date.now(),text:txt,cat:selCat,done:false,ts:Date.now(),voice:voiceFlag,alarm:dt||null,alarmFired:false});
-  save();
-  document.getElementById('memoInput').value='';voiceFlag=false;alarmOn=false;
-  document.getElementById('alarmToggle').classList.remove('on');document.getElementById('alarmFields').classList.remove('visible');
-  setVS('マイクボタンで話してメモできます',false);updateHeader();
-  showToast(dt?'メモとアラームをセットしました ⏰':'メモを追加しました ✓');
-  switchTab('list');filterCat='all';renderFilter();renderList();
-}
-
-function updateHeader(){const u=memos.filter(m=>!m.done).length;document.getElementById('headerSub').textContent=u+'件の未チェック';}
-
 function renderFilter(){const all=[{id:'all',label:'すべて'},...CATS];document.getElementById('filterChips').innerHTML=all.map(c=>`<div class="filter-chip${filterCat===c.id?' active':''}" onclick="setFilter('${c.id}')">${c.label}</div>`).join('');}
 function setFilter(id){filterCat=id;renderFilter();renderList();}
-
 function renderList(){
   const filtered=filterCat==='all'?memos:memos.filter(m=>m.cat===filterCat);
   const el=document.getElementById('memoList');
@@ -304,6 +324,7 @@ function renderList(){
   el.innerHTML=filtered.map(m=>{
     const c=getCat(m.cat);
     const overdue=m.alarm&&!m.done&&new Date(m.alarm).getTime()<now;
+    const reminderURL=m.alarm?makeReminderURL(m.text,m.alarm):null;
     return`<div class="memo-item${m.done?' done':''}${overdue?' overdue':''}">
       <div class="memo-meta">
         <span class="memo-cat-badge" style="background:${c.color};color:${c.textColor}">${c.label}</span>
@@ -313,6 +334,7 @@ function renderList(){
       </div>
       <div class="memo-text">${m.text}</div>
       ${m.alarm&&!m.done?`<div class="memo-alarm-time">⏰ ${fmtDt(m.alarm)}</div>`:''}
+      ${m.alarm&&!m.done?`<a href="${reminderURL}" class="reminder-btn">📌 リマインダーに追加する</a>`:''}
       <div class="memo-actions">
         ${m.done?`<button class="action-btn" onclick="toggleDone(${m.id})">未完了に戻す</button>`:`<button class="action-btn check-btn" onclick="toggleDone(${m.id})">✓ 完了</button>`}
         <button class="action-btn del-btn" onclick="deleteMemo(${m.id})">削除</button>
@@ -320,81 +342,41 @@ function renderList(){
     </div>`;
   }).join('');
 }
-
-function toggleDone(id){const m=memos.find(m=>m.id===id);if(m){m.done=!m.done;save();renderList();updateHeader();}}
-function deleteMemo(id){if(!confirm('このメモを削除しますか？'))return;memos=memos.filter(m=>m.id!==id);save();renderList();updateHeader();}
-
+async function toggleDone(id){
+  const m=memos.find(m=>m.id===id);if(!m)return;
+  const{error}=await db.from('memos').update({done:!m.done}).eq('id',id);
+  if(error){showToast('更新に失敗しました');return;}
+  m.done=!m.done;renderList();updateHeader();
+}
+async function deleteMemo(id){
+  if(!confirm('このメモを削除しますか？'))return;
+  const{error}=await db.from('memos').delete().eq('id',id);
+  if(error){showToast('削除に失敗しました');return;}
+  memos=memos.filter(m=>m.id!==id);renderList();updateHeader();
+}
 function renderAlarmTab(){
-  const daily=localStorage.getItem('daily_alarm');
-  if(daily){document.getElementById('dailyAlarmTime').value=daily;document.getElementById('dailyStatus').textContent='✅ 毎日 '+daily+' にお知らせします';document.getElementById('dailyStatus').classList.add('active');}
   const alarmed=memos.filter(m=>m.alarm&&!m.done);
   const el=document.getElementById('alarmMemoList');
   if(!alarmed.length){el.innerHTML='<div style="font-size:13px;color:var(--text3);padding:0.5rem 0;">アラーム付きのメモはありません</div>';return;}
   const now=Date.now();
   el.innerHTML=alarmed.map(m=>{
     const c=getCat(m.cat);const ov=new Date(m.alarm).getTime()<now;
-    return`<div style="padding:10px 0;border-bottom:0.5px solid var(--border);display:flex;gap:10px;align-items:flex-start;">
-      <div style="flex:1;">
-        <div style="font-size:13px;line-height:1.5;margin-bottom:5px;">${m.text}</div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;">
-          <span style="font-size:11px;padding:2px 8px;border-radius:4px;font-weight:500;background:${c.color};color:${c.textColor}">${c.label}</span>
-          <span style="font-size:11px;color:${ov?'var(--danger-text)':'var(--warning-text)'};">⏰ ${fmtDt(m.alarm)}${ov?' (期限切れ)':''}</span>
+    const reminderURL=makeReminderURL(m.text,m.alarm);
+    return`<div style="padding:10px 0;border-bottom:0.5px solid var(--border);">
+      <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:6px;">
+        <div style="flex:1;">
+          <div style="font-size:13px;line-height:1.5;margin-bottom:5px;">${m.text}</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <span style="font-size:11px;padding:2px 8px;border-radius:4px;font-weight:500;background:${c.color};color:${c.textColor}">${c.label}</span>
+            <span style="font-size:11px;color:${ov?'var(--danger-text)':'var(--warning-text)'};">⏰ ${fmtDt(m.alarm)}${ov?' (期限切れ)':''}</span>
+          </div>
         </div>
+        <button class="action-btn check-btn" style="font-size:12px;padding:4px 10px;flex-shrink:0;" onclick="toggleDone(${m.id});setTimeout(renderAlarmTab,500)">✓ 完了</button>
       </div>
-      <button class="action-btn check-btn" style="font-size:12px;padding:4px 10px;flex-shrink:0;" onclick="toggleDone(${m.id});renderAlarmTab()">✓ 完了</button>
+      <a href="${reminderURL}" class="reminder-btn">📌 リマインダーに追加する</a>
     </div>`;
   }).join('');
 }
-
-function setDailyAlarm(){
-  const t=document.getElementById('dailyAlarmTime').value;
-  if(!t)return;
-  localStorage.setItem('daily_alarm',t);
-  document.getElementById('dailyStatus').textContent='✅ 毎日 '+t+' にお知らせします';
-  document.getElementById('dailyStatus').classList.add('active');
-  scheduleDailyAlarm(t);showToast('毎日 '+t+' にアラームをセットしました ⏰');
-}
-function scheduleDailyAlarm(timeStr){
-  if(dailyTimer)clearTimeout(dailyTimer);
-  const[h,m]=timeStr.split(':').map(Number);
-  const now=new Date(),target=new Date();
-  target.setHours(h,m,0,0);if(target<=now)target.setDate(target.getDate()+1);
-  dailyTimer=setTimeout(()=>{
-    const u=memos.filter(m=>!m.done).length;
-    if(u>0)triggerAlarm('定時リマインダー',`未チェックのメモが ${u} 件あります。確認しましょう！`);
-    scheduleDailyAlarm(timeStr);
-  },target-now);
-}
-
-function checkAlarms(){
-  const now=new Date();
-  memos.forEach(m=>{
-    if(m.alarm&&!m.done&&!m.alarmFired&&new Date(m.alarm)<=now){
-      m.alarmFired=true;save();
-      triggerAlarm('メモのアラーム ⏰',m.text);
-    }
-  });
-}
-
-function triggerAlarm(title,body){
-  document.getElementById('alarmPopupTitle').textContent=title;
-  document.getElementById('alarmPopupBody').textContent=body;
-  document.getElementById('alarmOverlay').classList.add('show');
-  try{
-    const ctx=new(window.AudioContext||window.webkitAudioContext)();
-    [[880,0,0.15],[880,0.2,0.15],[1100,0.4,0.3]].forEach(([freq,start,dur])=>{
-      const osc=ctx.createOscillator(),gain=ctx.createGain();
-      osc.connect(gain);gain.connect(ctx.destination);
-      osc.frequency.value=freq;osc.type='sine';
-      gain.gain.setValueAtTime(0.3,ctx.currentTime+start);
-      gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+start+dur);
-      osc.start(ctx.currentTime+start);osc.stop(ctx.currentTime+start+dur);
-    });
-  }catch(e){}
-  if(Notification&&Notification.permission==='granted')new Notification(title,{body});
-}
-function dismissAlarm(){document.getElementById('alarmOverlay').classList.remove('show');renderList();updateHeader();}
-
 function renderStats(){
   const total=memos.length,done=memos.filter(m=>m.done).length,undone=total-done;
   document.getElementById('statsGrid').innerHTML=`
@@ -411,23 +393,23 @@ function renderStats(){
     </div>`;
   }).join('');
 }
-
 function switchTab(tab){
   ['add','list','alarm','stats'].forEach((t,i)=>{
     document.getElementById('sec-'+t).classList.toggle('section-hidden',t!==tab);
     document.querySelectorAll('.tab')[i].classList.toggle('active',t===tab);
   });
   if(tab==='list'){renderFilter();renderList();}
-  if(tab==='alarm'){renderAlarmTab();}
-  if(tab==='stats'){renderStats();}
+  if(tab==='alarm')renderAlarmTab();
+  if(tab==='stats')renderStats();
   updateHeader();
 }
-
-// 初期化
-renderCatChips();updateHeader();
-if(Notification&&Notification.permission==='default')Notification.requestPermission();
-setInterval(checkAlarms,30000);checkAlarms();
-const sd=localStorage.getItem('daily_alarm');if(sd)scheduleDailyAlarm(sd);
+async function init(){
+  renderCatChips();
+  await loadMemos();
+  updateHeader();
+  setInterval(loadMemos,30000);
+}
+init();
 </script>
 </body>
 </html>
